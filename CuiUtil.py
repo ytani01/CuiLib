@@ -127,19 +127,20 @@ class CuiKey(threading.Thread):
                 self.__log.debug('inkey=%s', inkey)
 
                 call_flag = False
-                for c in self._cmd:
-                    if type(c.key_sym) is str:
-                        c.key_sym = list(c.key_sym)
+                for cmd in self._cmd:
+                    if type(cmd.key_sym) is str:
+                        cmd.key_sym = list(cmd.key_sym)
 
-                    for k in c.key_sym:
-                        if k == inkey:
-                            call_th = threading.Thread(target=c.func,
-                                                       args=(inkey,),
-                                                       daemon=True)
-                            call_th.start()
+                    for k in cmd.key_sym:
+                        for ch in list(k):
+                            if ch == inkey:
+                                call_th = threading.Thread(target=cmd.func,
+                                                           args=(ch,),
+                                                           daemon=True)
+                                call_th.start()
 
-                            call_flag = True
-                            break
+                                call_flag = True
+                                break
 
                     if call_flag:
                         break
@@ -184,9 +185,9 @@ class SampleApp:
 
         self._active = False
         self._cmd = [
-            CuiCmd('aA', self.func1, debug=self._dbg),
-            CuiCmd(['b', 'B'], self.func2, debug=self._dbg),
-            CuiCmd(['q', 'Q', 'KEY_ESCAPE'],
+            CuiCmd('aAあ', self.func1, debug=self._dbg),
+            CuiCmd(['b', 'B', 'い'], self.func2, debug=self._dbg),
+            CuiCmd(['q', 'Q', 'KEY_ESCAPE', '終了'],
                    self.quit, debug=self._dbg)
         ]
 
