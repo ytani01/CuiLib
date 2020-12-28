@@ -7,7 +7,7 @@ Python3 template
 
 ### for detail and simple usage ###
 
-$ python3 -m pydoc CuiUtil.CuiBase
+$ python3 -m pydoc CuiUtil.CuiKey
 
 
 ### sample program ###
@@ -29,24 +29,24 @@ class CuiCmd:
     """
     __log = get_logger(__name__, False)
 
-    def __init__(self, key, func, debug):
+    def __init__(self, key_sym, func, debug=False):
         """ Constructor
         """
         self._dbg = debug
         __class__.__log = get_logger(__class__.__name__, self._dbg)
 
-        self.key = key
+        self.key_sym = key_sym
         self.func = func
 
 
-class CuiBase(threading.Thread):
+class CuiKey(threading.Thread):
     """
     Description
     -----------
 
     Simple Usage
     ============
-    from CuiUtil import CuiBase
+    from CuiUtil import CuiKey
 
     def func1(key_sym):
         print(key_sym)
@@ -59,7 +59,7 @@ class CuiBase(threading.Thread):
         CuiCmd('KeySym2', func2)
     ]
 
-    cui = CuiBase(cmds)
+    cui = CuiKey(cmds)
     cui.start()  # run forever
 
 
@@ -71,6 +71,8 @@ class CuiBase(threading.Thread):
     attr1: type(int|str|list of str ..)
         description
     """
+    INKEY_TIMEOUT = 0.5
+
     __log = get_logger(__name__, False)
 
     def __init__(self, cmd, debug=False):
@@ -78,11 +80,14 @@ class CuiBase(threading.Thread):
 
         Parameters
         ----------
-        cmds: list of Cmd
-            description
+        cmds: list of CuiCmd
         """
         self._dbg = debug
         __class__.__log = get_logger(__class__.__name__, self._dbg)
+
+        if type(cmd) != list or type(cmd[0]) != CuiCmd:
+            err = ValueError('invalid cmd list: %s' % cmd)
+            raise err
 
         self._cmd = cmd
 
@@ -108,22 +113,40 @@ class CuiBase(threading.Thread):
 
         self._active = True
 
-        while self._active:
-            inkey = t.inkey(timeout=1)
+        with self._term.cbreak():
+            while self._active:
+                inkey = self._term.inkey(timeout=self.INKEY_TIMEOUT)
 
-            if not inkey:
-                self.__log.debug('waiting key input ..')
-                continue
+                if not inkey:
+                    self.__log.debug('waiting key input ..')
+                    continue
 
-            if inkey.is_sequence:
-                self.__warning('inkey.name=%s .. ignored', inkey.name)
-                continue
+                if inkey.is_sequence:
+                    inkey = inkey.name
 
-            self.__log.debug('inkey=%s', inkey)
+                self.__log.debug('inkey=%s', inkey)
 
-            for c in self._cmd:
-                if c.key == inkey:
-                    c.func()
+                call_flag = False
+                for c in self._cmd:
+                    if type(c.key_sym) is str:
+                        c.key_sym = list(c.key_sym)
+
+                    for k in c.key_sym:
+                        if k == inkey:
+                            call_th = threading.Thread(target=c.func,
+                                                       args=(inkey,),
+                                                       daemon=True)
+                            call_th.start()
+
+                            call_flag = True
+                            break
+
+                    if call_flag:
+                        break
+
+                if not call_flag:
+                    self.__log.debug('invalid key: %a .. ignored',
+                                     inkey)
 
         self.__log.debug('done')
 
@@ -159,32 +182,48 @@ class SampleApp:
         self._arg = arg
         self._opt = opt
 
-        cmd = [
-            CuiCmd('a', self.func1),
-            CuiCmd('b', self.func2)
+        self._active = False
+        self._cmd = [
+            CuiCmd('aA', self.func1, debug=self._dbg),
+            CuiCmd(['b', 'B'], self.func2, debug=self._dbg),
+            CuiCmd(['q', 'Q', 'KEY_ESCAPE'],
+                   self.quit, debug=self._dbg)
         ]
 
-        self._cui = CuiBase(self._opt, debug=self._dbg)
+        self._cui = CuiKey(self._cmd, debug=self._dbg)
+        # self._cui = CuiKey([3], debug=self._dbg)
 
-    def func1(self):
+    def func1(self, key_sym):
         """
         """
-        print('func1: start')
+        print('%s: start' % key_sym)
         time.sleep(2)
-        print('func1: end')
+        print('%s: end' % key_sym)
 
-    def func2(self):
+    def func2(self, key_sym):
         """
         """
-        print('func2: start')
+        print('%s: start' % key_sym)
         time.sleep(1)
-        print('func2: end')
+        print('%s: end' % key_sym)
+
+    def quit(self, key_sym):
+        """
+        """
+        print('%s: quit!' % key_sym)
+        self._active = False
 
     def main(self):
         """ main routine
         """
         self.__log.debug('')
+
         self._cui.start()
+
+        self._active = True
+
+        while self._active:
+            time.sleep(1)
 
     def end(self):
         """ Call at the end of program.
@@ -199,7 +238,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 
 @click.command(context_settings=CONTEXT_SETTINGS, help='''
-CuiBase sample program
+CuiUtil sample program
 ''')
 @click.argument('arg', type=str, nargs=-1)
 @click.option('--opt', '-o', 'opt', type=str, default='def_value',
