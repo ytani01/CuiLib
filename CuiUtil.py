@@ -131,16 +131,15 @@ class CuiKey(threading.Thread):
                     if type(cmd.key_sym) is str:
                         cmd.key_sym = list(cmd.key_sym)
 
-                    for k in cmd.key_sym:
-                        for ch in list(k):
-                            if ch == inkey:
-                                call_th = threading.Thread(target=cmd.func,
-                                                           args=(ch,),
-                                                           daemon=True)
-                                call_th.start()
+                    for sym in cmd.key_sym:
+                        if sym == inkey:
+                            call_th = threading.Thread(target=cmd.func,
+                                                       args=(sym,),
+                                                       daemon=True)
+                            call_th.start()
 
-                                call_flag = True
-                                break
+                            call_flag = True
+                            break
 
                     if call_flag:
                         break
@@ -187,7 +186,7 @@ class SampleApp:
         self._cmd = [
             CuiCmd('aAあ', self.func1, debug=self._dbg),
             CuiCmd(['b', 'B', 'い'], self.func2, debug=self._dbg),
-            CuiCmd(['q', 'Q', 'KEY_ESCAPE', '終了'],
+            CuiCmd(['q', 'Q', 'KEY_ESCAPE', '終'],
                    self.quit, debug=self._dbg)
         ]
 
