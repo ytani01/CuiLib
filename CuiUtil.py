@@ -21,7 +21,7 @@ __date__   = '2020'
 
 import threading
 from blessed import Terminal
-from MyLogger import get_logger
+from my_logger import get_logger
 
 
 class CuiCmd:
