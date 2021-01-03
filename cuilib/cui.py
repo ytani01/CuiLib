@@ -8,43 +8,57 @@ CUI library
 __author__ = 'Yoichi Tanibayashi'
 __date__ = '2021/01'
 
+import sys
 import threading
 from blessed import Terminal
-from my_logger import get_logger
+from .my_logger import get_logger
 
 
-class CuiCmd:  # pylint: disable=too-few-public-methods
-    """ CuiCmd """
-    def __init__(self, key_sym, func, debug=False):
-        """ Constructor
-        """
-        self._dbg = debug
-        self.__log = get_logger(self.__class__.__name__, self._dbg)
-
-        self.key_sym = key_sym
-        self.func = func
-
-
-class Cui(threading.Thread):
-    """ Cui """
-    INKEY_TIMEOUT = 0.5
-
-    def __init__(self, cmd, debug=False):
+class Cmd:  # pylint: disable=too-few-public-methods
+    """ Cmd """
+    def __init__(self, key_sym, func, help_str='', debug=False):
         """ Constructor
 
         Parameters
         ----------
-        cmds: list of CuiCmd
+        key_sym: list of str
+        func: function
+        help_str: str
+        """
+        self._dbg = debug
+        self.__log = get_logger(self.__class__.__name__, self._dbg)
+        self.__log.debug('%s:%s:%s', key_sym, func, help_str)
+
+        self.key_sym = key_sym
+        self.func = func
+        self.help_str = help_str
+
+    def __str__(self):
+        """ str """
+        out_str = '%a' % (self.key_sym)
+        out_str += ':%s()' % (self.func.__name__)
+        out_str += ':%s' % (self.help_str)
+        return out_str
+
+
+class Cui(threading.Thread):
+    """ Cui """
+    INKEY_TIMEOUT = 0.2
+
+    def __init__(self, inkey_timeout=INKEY_TIMEOUT, debug=False):
+        """ Constructor
+
+        Parameters
+        ----------
+        inkey_timeout: float
+            timeout sec of inkey()
         """
         self._dbg = debug
         self.__log = get_logger(self.__class__.__name__, self._dbg)
 
-        if type(cmd) != list or type(cmd[0]) != CuiCmd:
-            err = ValueError('invalid cmd list: %s' % cmd)
-            raise err
+        self._cmd = []
 
-        self._cmd = cmd
-
+        self._inkey_timeout = inkey_timeout
         self._active = False
         self._term = Terminal()
 
@@ -59,6 +73,52 @@ class Cui(threading.Thread):
         self.join()
         self.__log.debug('done')
 
+    def add(self, key_sym, func, help_str=''):
+        """
+        add cmd
+
+        Parameters
+        ----------
+        key_sym: str or list of str
+            key symbols
+        func: func
+            command function
+        help_str: str
+            help string
+        """
+        if isinstance(key_sym, str):
+            key_sym = list(key_sym)
+
+        cmd = Cmd(key_sym, func, help_str, debug=self._dbg)
+        self.__log.debug('cmd=%s', cmd)
+
+        self._cmd.append(cmd)
+
+    def help(self, print_flag=False):
+        """ command list
+
+        Parameters
+        ----------
+        print_flag: bool
+            print or not
+
+        Returns
+        -------
+        help_list: list of str
+        """
+        self.__log.debug('')
+
+        help_list = []
+        for cmd in self._cmd:
+            help_str = '%a %s' % (cmd.key_sym, cmd.help_str)
+            help_list.append(help_str)
+
+        if print_flag:
+            for help_str in help_list:
+                print(help_str)
+
+        return help_list
+
     def run(self):
         """
         run thread
@@ -69,10 +129,11 @@ class Cui(threading.Thread):
 
         with self._term.cbreak():
             while self._active:
-                inkey = self._term.inkey(timeout=self.INKEY_TIMEOUT)
+                inkey = self._term.inkey(timeout=self._inkey_timeout)
 
                 if not inkey:
-                    self.__log.debug('waiting key input ..')
+#                    if self._dbg:
+#                        print('.', end='', flush=True)
                     continue
 
                 if inkey.is_sequence:
@@ -82,9 +143,6 @@ class Cui(threading.Thread):
 
                 call_flag = False
                 for cmd in self._cmd:
-                    if isinstance(cmd.key_sym, str):
-                        cmd.key_sym = list(cmd.key_sym)
-
                     for sym in cmd.key_sym:
                         if sym == inkey:
                             call_th = threading.Thread(target=cmd.func,
