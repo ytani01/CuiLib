@@ -7,7 +7,7 @@
 import time
 import cuilib
 
-cui = cuilib.Cui(debug=True)
+cui = cuilib.Cui()
 active = True
 
 def func1(key_sym):
