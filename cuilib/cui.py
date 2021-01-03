@@ -8,7 +8,6 @@ CUI library
 __author__ = 'Yoichi Tanibayashi'
 __date__ = '2021/01'
 
-import sys
 import threading
 from blessed import Terminal
 from .my_logger import get_logger

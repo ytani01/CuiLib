@@ -21,7 +21,4 @@ Character User Interface utilties for Python
 
 ## sample progream
 
-[include](sample.py)
-```bash
-
-```
+see [sample.py](sample.py)
