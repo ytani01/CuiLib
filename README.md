@@ -10,17 +10,18 @@ Character User Interface utilties for Python
        $ source ./bin/activate
 
 (env1) $ pip install -U pip setuptools wheel
-
+       :
 (env1) $ hasn -r
 
 (env1) $ git clone https://github.com/ytani01/CuiLib.git
-
+       :
 (env1) $ cd CuiLib
 (env1) $ pip install .
 ```
 
-## test progream
+## sample progream
 
+[include](sample.py)
 ```bash
-(env1) $ python -m cuilib
+
 ```
