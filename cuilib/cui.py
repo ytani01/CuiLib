@@ -138,7 +138,7 @@ class Cui(threading.Thread):
                 if inkey.is_sequence:
                     inkey = inkey.name
 
-                self.__log.debug('inkey=%s', inkey)
+                self.__log.debug('inkey=\'%s\'', inkey)
 
                 call_flag = False
                 for cmd in self._cmd:
