@@ -156,6 +156,6 @@ class Cui(threading.Thread):
                         break
 
                 if not call_flag:
-                    self.__log.debug('invalid key: %a .. ignored', inkey)
+                    self.__log.warning('invalid key: %a .. ignored', inkey)
 
         self.__log.debug('done')
