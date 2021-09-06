@@ -14,7 +14,7 @@ with open("README.md") as f:
 
 setup(
     name='cuilib',
-    version='0.0.3',
+    version='0.0.4',
     description='Simple CUI(Command Line Interface) library',
     long_description=long_description,
     long_description_content_type="text/markdown",
