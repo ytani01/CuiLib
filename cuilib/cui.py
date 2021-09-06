@@ -63,11 +63,16 @@ class Cui(threading.Thread):
 
         super().__init__(daemon=True)
 
-    def end(self):
+    def end(self, key_sym=None):
         """
         Call at the end of program
+
+        Parameters
+        ----------
+        key_sym: None
+            dummy to be used as command function
         """
-        self.__log.debug('doing ..')
+        self.__log.debug('key_sym=%s: doing ..', key_sym)
         self._active = False
         self.join()
         self.__log.debug('done')
@@ -93,11 +98,14 @@ class Cui(threading.Thread):
 
         self._cmd.append(cmd)
 
-    def help(self, print_flag=False):
+    def help(self, key_sym=None, print_flag=True):
         """ command list
 
         Parameters
         ----------
+        key_sym: None
+            dummy to be used as command function
+
         print_flag: bool
             print or not
 
@@ -105,7 +113,7 @@ class Cui(threading.Thread):
         -------
         help_list: list of str
         """
-        self.__log.debug('')
+        self.__log.debug('key_sym=%s', key_sym)
 
         help_list = []
         for cmd in self._cmd:
@@ -131,8 +139,8 @@ class Cui(threading.Thread):
                 inkey = self._term.inkey(timeout=self._inkey_timeout)
 
                 if not inkey:
-#                    if self._dbg:
-#                        print('.', end='', flush=True)
+                    if self._dbg:
+                        print('.', end='', flush=True)
                     continue
 
                 if inkey.is_sequence:
