@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 #
-# (c) 2020 Yoichi Tanibayashi
+# Copyright (c) 2020 Yoichi Tanibayashi
 #
 """
 CUI library
 """
 __author__ = 'Yoichi Tanibayashi'
-__date__ = '2021/01'
+__date__ = '2021/09'
 
 import threading
 from blessed import Terminal
@@ -76,6 +76,11 @@ class Cui(threading.Thread):
         self._active = False
         self.join()
         self.__log.debug('done')
+
+    def is_active(self):
+        """
+        """
+        return self._active
 
     def add(self, key_sym, func, help_str=''):
         """
